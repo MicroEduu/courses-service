@@ -57,6 +57,23 @@ namespace CoursesService.Controllers
             }
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCourse(int id)
+        {
+            try
+            {
+                var message = await _service.DeleteAsync(id);
+                return Ok(message);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Curso não encontrado");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao deletar curso: {ex.Message}");
+            }
+        }
 
     }
 }

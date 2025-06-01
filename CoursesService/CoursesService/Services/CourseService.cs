@@ -114,5 +114,25 @@ namespace CoursesService.Services
             }
         }
 
+        public async Task<string> DeleteAsync(int id)
+        {
+            var course = await _repository.GetByIdAsync(id);
+
+            if (course == null)
+            {
+                throw new KeyNotFoundException("Curso não encontrado");
+            }
+
+            try
+            {
+                await _repository.DeleteAsync(id);
+                return "Curso deletado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Erro ao deletar curso", ex);
+            }
+        }
+
     }
 }
