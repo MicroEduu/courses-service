@@ -75,5 +75,26 @@ namespace CoursesService.Controllers
             }
         }
 
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> UpdateCoursePartial(int id, [FromBody] CourseUpdateDto dto)
+        {
+            try
+            {
+                var updatedCourse = await _service.UpdatePartialAsync(id, dto);
+                return Ok(updatedCourse);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Curso não encontrado");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao atualizar curso: {ex.Message}");
+            }
+        }
     }
 }

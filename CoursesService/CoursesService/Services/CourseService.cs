@@ -134,5 +134,52 @@ namespace CoursesService.Services
             }
         }
 
+        public async Task<CourseReadDto> UpdatePartialAsync(int id, CourseUpdateDto dto)
+        {
+            var course = await _repository.GetByIdAsync(id);
+            if (course == null)
+            {
+                throw new KeyNotFoundException("Curso não encontrado");
+            }
+
+            bool updated = false;
+
+            // Verifica se o Title foi enviado e se é diferente
+            if (!string.IsNullOrEmpty(dto.Title) && dto.Title != course.Title)
+            {
+                course.Title = dto.Title;
+                updated = true;
+            }
+
+            // Verifica se o Description foi enviado e se é diferente
+            if (!string.IsNullOrEmpty(dto.Description) && dto.Description != course.Description)
+            {
+                course.Description = dto.Description;
+                updated = true;
+            }
+
+            if (!updated)
+            {
+                throw new InvalidOperationException("Nenhuma alteração válida foi fornecida ou os dados são os mesmos");
+            }
+
+            try
+            {
+                await _repository.UpdateAsync(course);
+                return new CourseReadDto
+                {
+                    Id = course.Id,
+                    Title = course.Title,
+                    Description = course.Description,
+                    IdTeacher = course.IdTeacher,
+                    NumberSubscribers = course.NumberSubscribers,
+                    CreatedAt = course.CreatedAt
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Erro ao atualizar o curso", ex);
+            }
+        }
     }
 }
