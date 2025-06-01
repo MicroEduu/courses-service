@@ -1,4 +1,6 @@
-﻿using CoursesService.DTOs;
+﻿using CoursesService.DTO;
+using CoursesService.DTOs;
+using CoursesService.Models;
 using CoursesService.Repositories;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -6,7 +8,7 @@ namespace CoursesService.Services
 {
     public class CourseService
     {
-        private readonly CourseRepository _repository; 
+        private readonly CourseRepository _repository;
 
         public CourseService(CourseRepository repository)
         {
@@ -21,7 +23,7 @@ namespace CoursesService.Services
 
                 if (courses == null || !courses.Any())
                 {
-                    return new List<CourseReadDto>();  
+                    return new List<CourseReadDto>();
                 }
 
                 return courses.Select(c => new CourseReadDto
@@ -47,7 +49,7 @@ namespace CoursesService.Services
             {
                 var course = await _repository.GetByIdAsync(id);
 
-                if(course == null)
+                if (course == null)
                 {
                     return null;
                 }
@@ -67,5 +69,50 @@ namespace CoursesService.Services
                 throw new ApplicationException("Erro ao busca o curso", ex);
             }
         }
+
+        public async Task<CourseReadDto> CreateAsync(CourseCreateDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Title))
+            {
+                throw new ArgumentException("O título é obrigatório");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Description))
+            {
+                throw new ArgumentException("A descrição é obrigatória");
+            }
+
+            if (!dto.IdTeacher.HasValue)
+            {
+                throw new ArgumentException("O professor é obrigatório");
+            }
+
+            var course = new Course(dto.Title, dto.Description)
+            {
+                IdTeacher = dto.IdTeacher.Value,
+                NumberSubscribers = 0,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            try
+            {
+                await _repository.CreateAsync(course);
+
+                return new CourseReadDto
+                {
+                    Id = course.Id,
+                    Title = course.Title,
+                    Description = course.Description,
+                    IdTeacher = course.IdTeacher,
+                    NumberSubscribers = course.NumberSubscribers,
+                    CreatedAt = course.CreatedAt
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Erro ao criar o curso", ex);
+            }
+        }
+
     }
 }

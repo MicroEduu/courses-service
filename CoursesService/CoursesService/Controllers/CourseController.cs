@@ -1,4 +1,6 @@
-﻿using CoursesService.Services;
+﻿using CoursesService.DTO;
+using CoursesService.DTOs;
+using CoursesService.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CoursesService.Controllers
@@ -35,6 +37,26 @@ namespace CoursesService.Controllers
             }
             return Ok(course);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateCourse([FromBody] CourseCreateDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var createdCourse = await _service.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetCourseById), new { id = createdCourse.Id }, createdCourse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao criar curso: {ex.Message}");
+            }
+        }
+
 
     }
 }
