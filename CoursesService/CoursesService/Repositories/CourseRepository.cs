@@ -15,7 +15,7 @@ namespace CoursesService.Repositories
 
         public async Task<List<Course>> GetAllAsync() => await _context.Courses.ToListAsync();
         public async Task<Course?> GetByIdAsync(int id) => await _context.Courses.FindAsync(id);
-        public async Task AddAsync(Course course)
+        public async Task CreateAsync(Course course)
         {
             _context.Courses.Add(course);
             await _context.SaveChangesAsync();
