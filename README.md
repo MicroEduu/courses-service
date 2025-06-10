@@ -61,6 +61,10 @@ dotnet ef database update
 dotnet run
 ```
 
+### 6️⃣ Arquivo "appsettings"
+
+No arquivo "appsettings", adicionar o valor "kzD8@9sVmT4l!dR3FzG6pQ1uLbXeY2Jh" na string "SecretKey"
+
 🎉 **Aplicação iniciada com sucesso!**
 
 A aplicação estará disponível em:
