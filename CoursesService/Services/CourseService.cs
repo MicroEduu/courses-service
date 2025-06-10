@@ -70,26 +70,17 @@ namespace CoursesService.Services
             }
         }
 
-        public async Task<CourseReadDto> CreateAsync(CourseCreateDto dto)
+        public async Task<CourseReadDto> CreateAsync(CourseCreateDto dto, int creatorId)
         {
             if (string.IsNullOrWhiteSpace(dto.Title))
-            {
                 throw new ArgumentException("O título é obrigatório");
-            }
 
             if (string.IsNullOrWhiteSpace(dto.Description))
-            {
                 throw new ArgumentException("A descrição é obrigatória");
-            }
-
-            if (!dto.IdTeacher.HasValue)
-            {
-                throw new ArgumentException("O professor é obrigatório");
-            }
 
             var course = new Course(dto.Title, dto.Description)
             {
-                IdTeacher = dto.IdTeacher.Value,
+                IdTeacher = creatorId,
                 NumberSubscribers = 0,
                 CreatedAt = DateTime.UtcNow
             };
@@ -113,6 +104,7 @@ namespace CoursesService.Services
                 throw new ApplicationException("Erro ao criar o curso", ex);
             }
         }
+
 
         public async Task<string> DeleteAsync(int id)
         {

@@ -6,11 +6,8 @@ namespace CoursesService.DTO
     {
         [Required(ErrorMessage = "O título é obrigatório")]
         public string Title { get; set; } = null!;
-        [Required(ErrorMessage = "A descrição é obrigatório")]
+
+        [Required(ErrorMessage = "A descrição é obrigatória")]
         public string Description { get; set; } = null!;
-        [Required(ErrorMessage = "O professor é obrigatório")]
-        public int? IdTeacher { get; set; }
-
     }
-
 }

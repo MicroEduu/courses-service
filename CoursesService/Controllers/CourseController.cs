@@ -1,7 +1,9 @@
 ﻿using CoursesService.DTO;
 using CoursesService.DTOs;
 using CoursesService.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CoursesService.Controllers
 {
@@ -16,7 +18,9 @@ namespace CoursesService.Controllers
             _service = service;
         }
 
+        // Get all: Admin, Professor, Aluno
         [HttpGet]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<IActionResult> GetAllCourses()
         {
             var res = await _service.GetAllAsync();
@@ -27,7 +31,9 @@ namespace CoursesService.Controllers
             return Ok(res);
         }
 
+        // Get by id: Admin, Professor, Aluno
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<IActionResult> GetCourseById(int id)
         {
             var course = await _service.GetByIdAsync(id);
@@ -38,17 +44,24 @@ namespace CoursesService.Controllers
             return Ok(course);
         }
 
+        // Create: Admin, Professor
         [HttpPost]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> CreateCourse([FromBody] CourseCreateDto dto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
             try
             {
-                var createdCourse = await _service.CreateAsync(dto);
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized("Token inválido: Id do usuário não encontrado");
+
+                var teacherId = int.Parse(userIdClaim.Value);
+
+                var createdCourse = await _service.CreateAsync(dto, teacherId);
+
                 return CreatedAtAction(nameof(GetCourseById), new { id = createdCourse.Id }, createdCourse);
             }
             catch (Exception ex)
@@ -57,29 +70,27 @@ namespace CoursesService.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCourse(int id)
-        {
-            try
-            {
-                var message = await _service.DeleteAsync(id);
-                return Ok(message);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound("Curso não encontrado");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Erro ao deletar curso: {ex.Message}");
-            }
-        }
-
+        // Edit: Admin, Professor
         [HttpPatch("{id}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> UpdateCoursePartial(int id, [FromBody] CourseUpdateDto dto)
         {
             try
             {
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized("Token inválido: Id do usuário não encontrado");
+
+                var userId = int.Parse(userIdClaim.Value);
+
+                var course = await _service.GetByIdAsync(id);
+                if (course == null)
+                    return NotFound("Curso não encontrado");
+
+                // Se não for admin, verifica se é o professor dono do curso
+                if (!User.IsInRole("Admin") && course.IdTeacher != userId)
+                    return Forbid("Apenas o professor responsável pode editar este curso.");
+
                 var updatedCourse = await _service.UpdatePartialAsync(id, dto);
                 return Ok(updatedCourse);
             }
@@ -96,5 +107,40 @@ namespace CoursesService.Controllers
                 return StatusCode(500, $"Erro ao atualizar curso: {ex.Message}");
             }
         }
+
+        // Delete: Admin, Professor
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> DeleteCourse(int id)
+        {
+            try
+            {
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized("Token inválido: Id do usuário não encontrado");
+
+                var userId = int.Parse(userIdClaim.Value);
+
+                var course = await _service.GetByIdAsync(id);
+                if (course == null)
+                    return NotFound("Curso não encontrado");
+
+                // Se não for admin, verifica se é o professor dono do curso
+                if (!User.IsInRole("Admin") && course.IdTeacher != userId)
+                    return Forbid("Apenas o professor responsável pode excluir este curso.");
+
+                var message = await _service.DeleteAsync(id);
+                return Ok(message);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Curso não encontrado");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao deletar curso: {ex.Message}");
+            }
+        }
+
     }
 }
