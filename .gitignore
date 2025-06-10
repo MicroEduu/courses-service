@@ -1,40 +1,79 @@
-
+# Visual Studio
 .vs/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-*.sln
-*.suo
-*.vssscc
 *.vssscc
 
-
+# Build results
 bin/
 obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
 
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
 
-CoursesService/CoursesService.csproj.user
-CoursesService/CoursesService.http
-
-
+# Specific project files (ajustado para o caminho correto)
+CoursesService/*.csproj.user
+CoursesService/*.http
 CoursesService/courses.db
+CoursesService/appsettings.Development.json
 
-
+# Logs
 *.log
+logs/
 
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
 
+# User secrets
 secrets.json
+appsettings.local.json
 
-
+# Test results
 TestResults/
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
 
-
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
+# IDEs
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
+# Package managers
 packages/
-CoursesService/CoursesService/courses.db
+node_modules/
+*.tgz
+*.tar.gz
+
+# Temporary files
+*.tmp
+*.temp
