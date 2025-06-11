@@ -2,6 +2,8 @@
 
 Este documento apresenta um guia completo para configurar e executar a aplicação em sua máquina local de forma rápida e eficiente.
 
+Este micro representa o CRUD de cursos do sistema, além de conter uma requisição para o microserviço de Auth Service para retornar o token de autenticação e os dados do usuário (todas as rotas precisam de autenticação, exceto a de login).
+
 ##  Pré-requisitos
 
 Certifique-se de ter as seguintes ferramentas instaladas em seu sistema:
