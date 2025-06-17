@@ -173,5 +173,27 @@ namespace CoursesService.Services
                 throw new ApplicationException("Erro ao atualizar o curso", ex);
             }
         }
+
+        public async Task IncrementSubscriberAsync(int id)
+        {
+            var course = await _repository.GetByIdAsync(id);
+
+            if (course == null)
+            {
+                throw new KeyNotFoundException("Curso não encontrado");
+            }
+
+            course.NumberSubscribers += 1;
+
+            try
+            {
+                await _repository.UpdateAsync(course);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Erro ao atualizar número de inscritos", ex);
+            }
+        }
+
     }
 }

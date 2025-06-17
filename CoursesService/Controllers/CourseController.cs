@@ -142,5 +142,27 @@ namespace CoursesService.Controllers
             }
         }
 
+        [HttpPatch("increment-subscriber/{id}")]
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [Authorize] 
+        public async Task<IActionResult> IncrementSubscriber(int id)
+        {
+            try
+            {
+                var course = await _service.GetByIdAsync(id);
+                if (course == null)
+                    return NotFound("Curso não encontrado");
+
+                await _service.IncrementSubscriberAsync(id);
+
+                return Ok("Número de inscritos atualizado com sucesso");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao atualizar número de inscritos: {ex.Message}");
+            }
+        }
+
+
     }
 }
