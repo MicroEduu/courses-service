@@ -67,3 +67,35 @@ dotnet run
 
 A aplicação estará disponível em:
 - 🌐 **HTTP:** http://localhost:5072/swagger/index.html
+
+# 📌 Rotas da API
+
+## 🔓 Rotas Públicas (sem token)
+
+| Método | Endpoint           | Descrição                                  |
+|--------|--------------------|--------------------------------------------|
+| GET    | /api/Auth/token    | Obtém um token de autenticação do usuário. |
+
+---
+
+## 🔒 Rotas Protegidas (com token)
+
+### 🔐 Autenticação
+
+| Método | Endpoint              | Descrição                                                  |
+|--------|------------------------|------------------------------------------------------------|
+| GET    | /api/Auth/user-info    | Retorna informações do usuário com base no token enviado.  |
+
+---
+
+### 🎓 Cursos (`/api/Course`)
+
+| Método | Endpoint             | Descrição                                                       | Permissão                                  |
+|--------|-----------------------|------------------------------------------------------------------|--------------------------------------------|
+| GET    | /api/Course           | Lista todos os cursos cadastrados.                              | Todos os usuários                          |
+| POST   | /api/Course           | Cadastra um novo curso.                                         | Apenas **admins** e **professores**       |
+| GET    | /api/Course/{id}      | Busca os detalhes de um curso específico.                       | Todos os usuários                          |
+| PATCH  | /api/Course/{id}      | Edita um curso específico.                                      | **Admins** ou **professores responsáveis** |
+| DELETE | /api/Course/{id}      | Remove um curso específico.                                     | **Admins** ou **professores responsáveis** |
+
+
