@@ -23,12 +23,12 @@ namespace CoursesService.Controllers
         [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<IActionResult> GetAllCourses()
         {
-            var res = await _service.GetAllAsync();
-            if (res == null || !res.Any())
-            {
-                return NotFound("Nenhum curso cadastrado");
-            }
-            return Ok(res);
+            var courses = await _service.GetAllAsync();
+
+            if (courses == null || !courses.Any())
+                return NoContent();
+
+            return Ok(new { message = "Cursos encontrados com sucesso.", data = courses });
         }
 
         // Get by id: Admin, Professor, Aluno
@@ -37,11 +37,10 @@ namespace CoursesService.Controllers
         public async Task<IActionResult> GetCourseById(int id)
         {
             var course = await _service.GetByIdAsync(id);
-            if (course == null)
-            {
-                return NotFound("Curso não encontrado");
-            }
-            return Ok(course);
+
+            return course == null
+                ? NotFound(new { message = "Curso não encontrado." })
+                : Ok(new { message = "Curso encontrado com sucesso.", data = course });
         }
 
         // Create: Admin, Professor
@@ -49,24 +48,27 @@ namespace CoursesService.Controllers
         [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> CreateCourse([FromBody] CourseCreateDto dto)
         {
+            if (User.IsInRole("Student"))
+                return StatusCode(403, new { message = "Alunos podem somente visualizar os cursos." });
+
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return BadRequest(new { message = "Dados inválidos.", errors = ModelState });
+
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized(new { message = "Token inválido: Id do usuário não encontrado." });
+
+            var teacherId = int.Parse(userIdClaim.Value);
 
             try
             {
-                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
-                    return Unauthorized("Token inválido: Id do usuário não encontrado");
-
-                var teacherId = int.Parse(userIdClaim.Value);
-
-                var createdCourse = await _service.CreateAsync(dto, teacherId);
-
-                return CreatedAtAction(nameof(GetCourseById), new { id = createdCourse.Id }, createdCourse);
+                var created = await _service.CreateAsync(dto, teacherId);
+                return CreatedAtAction(nameof(GetCourseById), new { id = created.Id },
+                    new { message = "Curso criado com sucesso.", data = created });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Erro ao criar curso: {ex.Message}");
+                return StatusCode(500, new { message = "Erro ao criar curso.", details = ex.Message });
             }
         }
 
@@ -75,36 +77,34 @@ namespace CoursesService.Controllers
         [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> UpdateCoursePartial(int id, [FromBody] CourseUpdateDto dto)
         {
+            if (User.IsInRole("Student"))
+                return StatusCode(403, new { message = "Alunos podem somente visualizar os cursos." });
+
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized(new { message = "Token inválido: Id do usuário não encontrado." });
+
+            var userId = int.Parse(userIdClaim.Value);
+            var course = await _service.GetByIdAsync(id);
+
+            if (course == null)
+                return NotFound(new { message = "Curso não encontrado." });
+
+            if (!User.IsInRole("Admin") && course.IdTeacher != userId)
+                return StatusCode(403, new { message = "Apenas o professor responsável pode editar este curso." });
+
             try
             {
-                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
-                    return Unauthorized("Token inválido: Id do usuário não encontrado");
-
-                var userId = int.Parse(userIdClaim.Value);
-
-                var course = await _service.GetByIdAsync(id);
-                if (course == null)
-                    return NotFound("Curso não encontrado");
-
-                // Se não for admin, verifica se é o professor dono do curso
-                if (!User.IsInRole("Admin") && course.IdTeacher != userId)
-                    return Forbid("Apenas o professor responsável pode editar este curso.");
-
-                var updatedCourse = await _service.UpdatePartialAsync(id, dto);
-                return Ok(updatedCourse);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound("Curso não encontrado");
+                var updated = await _service.UpdatePartialAsync(id, dto);
+                return Ok(new { message = "Curso atualizado com sucesso.", data = updated });
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { message = "Erro de validação.", details = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Erro ao atualizar curso: {ex.Message}");
+                return StatusCode(500, new { message = "Erro ao atualizar curso.", details = ex.Message });
             }
         }
 
@@ -113,56 +113,52 @@ namespace CoursesService.Controllers
         [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> DeleteCourse(int id)
         {
+            if (User.IsInRole("Student"))
+                return StatusCode(403, new { message = "Alunos podem somente visualizar os cursos." });
+
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized(new { message = "Token inválido: Id do usuário não encontrado." });
+
+            var userId = int.Parse(userIdClaim.Value);
+            var course = await _service.GetByIdAsync(id);
+
+            if (course == null)
+                return NotFound(new { message = "Curso não encontrado." });
+
+            if (!User.IsInRole("Admin") && course.IdTeacher != userId)
+                return StatusCode(403, new { message = "Apenas o professor responsável pode excluir este curso." });
+
             try
             {
-                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
-                    return Unauthorized("Token inválido: Id do usuário não encontrado");
-
-                var userId = int.Parse(userIdClaim.Value);
-
-                var course = await _service.GetByIdAsync(id);
-                if (course == null)
-                    return NotFound("Curso não encontrado");
-
-                // Se não for admin, verifica se é o professor dono do curso
-                if (!User.IsInRole("Admin") && course.IdTeacher != userId)
-                    return Forbid("Apenas o professor responsável pode excluir este curso.");
-
-                var message = await _service.DeleteAsync(id);
-                return Ok(message);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound("Curso não encontrado");
+                var result = await _service.DeleteAsync(id);
+                return Ok(new { message = result });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Erro ao deletar curso: {ex.Message}");
+                return StatusCode(500, new { message = "Erro ao excluir curso.", details = ex.Message });
             }
         }
 
+        // Increment Subscriber
         [HttpPatch("increment-subscriber/{id}")]
         [ApiExplorerSettings(IgnoreApi = true)]
-        [Authorize] 
+        [Authorize]
         public async Task<IActionResult> IncrementSubscriber(int id)
         {
+            var course = await _service.GetByIdAsync(id);
+            if (course == null)
+                return NotFound(new { message = "Curso não encontrado." });
+
             try
             {
-                var course = await _service.GetByIdAsync(id);
-                if (course == null)
-                    return NotFound("Curso não encontrado");
-
                 await _service.IncrementSubscriberAsync(id);
-
-                return Ok("Número de inscritos atualizado com sucesso");
+                return Ok(new { message = "Número de inscritos incrementado com sucesso." });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Erro ao atualizar número de inscritos: {ex.Message}");
+                return StatusCode(500, new { message = "Erro ao atualizar número de inscritos.", details = ex.Message });
             }
         }
-
-
     }
 }
