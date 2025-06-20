@@ -76,6 +76,10 @@ A aplicação estará disponível em:
 |--------|--------------------|--------------------------------------------|
 | GET    | /api/Auth/token    | Obtém um token de autenticação do usuário. |
 
+> Esta rota serve apenas como um endpoint para acionar a rota de autenticação do microserviço de autenticação.
+> 
+> É necessário que o microserviço de autenticação esteja em execução para que esta rota funcione corretamente.
+
 ---
 
 ## 🔒 Rotas Protegidas (com token)
